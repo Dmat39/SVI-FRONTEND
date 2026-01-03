@@ -17,13 +17,25 @@ import * as XLSX from "xlsx-js-style";
 
 const Historial = () => {
     const {addParams} = UseUrlParamsManager()
-    const {getData} = useFetch() 
+    const {getData} = useFetch()
     const [incidenciasHistorial,setIncidenciasHistorial] = useState([])
     const [isLoading,setIsLoading] = useState(false)
     const { token } = useSelector((state) => state.auth);
     const [turno,setTurno] = useState('Mañana')
     const navigate = useNavigate()
     const [selectedDate, setSelectedDate] = useState(dayjs());
+
+    // Función para transformar el turno al formato esperado por el backend
+    const transformTurno = (turnoValue) => {
+        const turnoMap = {
+            'Mañana': 'MANANA',
+            'Tarde': 'TARDE',
+            'Noche': 'NOCHE',
+            'No Definido': 'UNDEFINED',
+            'Rotativo': 'ROTATIVO'
+        };
+        return turnoMap[turnoValue] || turnoValue;
+    };
 
     useEffect(() => {
         fetchIncidencias(location.search|| undefined)
@@ -40,20 +52,20 @@ const Historial = () => {
         try {
             const response = await getData(`${import.meta.env.VITE_APP_ENDPOINT_PRUEBA}/serenos/jurisdicciones`);
             if(response.status){
-                const responseIncidencias = await getData(`${import.meta.env.VITE_APP_ENDPOINT_PRUEBA}/preincidencias/historial${urlParams}`,token)
+                const responseIncidencias = await getData(`${import.meta.env.VITE_APP_ENDPOINT_PRUEBA}/incidencias/historial${urlParams}`,token)
                 console.log(responseIncidencias)
                 if(responseIncidencias && responseIncidencias.status){
-                    if(responseIncidencias.data.length > 0){
-                    const historialincidenciasdata = responseIncidencias.data[0].jurisdicciones.map(incidencia => ({
+                    if(responseIncidencias.data && responseIncidencias.data.length > 0){
+                    const historialincidenciasdata = responseIncidencias.data.map(incidencia => ({
                         ...incidencia,
-                        jurisdiccion: response.data.data.find(jurisdiccion => jurisdiccion.id === incidencia.jurisdiccion_id).nombre    
+                        jurisdiccion: response.data.data.find(jurisdiccion => jurisdiccion.id === incidencia.jurisdiccion_id)?.nombre || "Sin jurisdicción"
                     }))
-                    setIncidenciasHistorial(historialincidenciasdata)   
+                    setIncidenciasHistorial(historialincidenciasdata)
                 }
                 else{
                     setIncidenciasHistorial([])
                 }
-                setIsLoading(false) 
+                setIsLoading(false)
                 }
             }
             
@@ -216,7 +228,7 @@ const Historial = () => {
         label={'Turnos'}
         onChange={(e) => {
             setTurno(e.target.value)
-            addParams({ turno: e.target.value })
+            addParams({ turno: transformTurno(e.target.value) })
         }}
         value={turno}
         options={[{id:1,value:'Mañana',label:"Mañana"},{id:2,value:'Tarde',label:"Tarde"},{id:3,value:'Noche',label:"Noche"},{id:4,value:'No Definido',label:"No Definido"},{id:5,value:'Rotativo',label:"Rotativo"}]}

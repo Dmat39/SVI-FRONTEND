@@ -42,8 +42,16 @@ const LoginIncidencias = () => {
                     setAxiosToken(token);
                     dispatch(setTokenAuth(token));
                 }
-                const userId = response?.data?.user_id || response?.data?.data?.user_id;
-                if (userId) dispatch(setIdIncidencias(userId));
+
+                // Guardar datos del usuario
+                const userData = response?.data?.data;
+                if (userData) {
+                    // Usar el email como ID temporal o crear un identificador único
+                    dispatch(setIdIncidencias(values.email));
+                }
+
+                // Redirigir a la lista de incidencias después del login exitoso
+                navigate('/incidencias/lista');
             } catch (error) {
                 setError(
                     error.response?.data?.message ||

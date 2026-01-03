@@ -75,35 +75,53 @@ const Incidencias = () => {
   }, [itemsFiltros])
 
   useEffect(() => {
+    console.log('🔌 [SOCKET] Iniciando conexión al servidor:', import.meta.env.VITE_APP_ENDPOINT_PRUEBA_SOCKET);
     const socket = io(import.meta.env.VITE_APP_ENDPOINT_PRUEBA_SOCKET, {
       transports: ['websocket'],
     })
     socketRef.current = socket
 
+    socket.on('connect', () => {
+      console.log('✅ [SOCKET] Conectado al servidor - Socket ID:', socket.id);
+    })
+
+    socket.on('connect_error', (error) => {
+      console.error('❌ [SOCKET] Error de conexión:', error);
+    })
+
     socket.on('agregar-preincidencia', (preincidencia) => {
+      console.log('🔵 [SOCKET] agregar-preincidencia - Datos recibidos:', preincidencia);
       const keys = ["id", "jurisdiccion", "direccion", "creado", "hora", "notShow"]
       const formatedData = formatData([preincidencia], subsectoresRef.current, subtiposRef.current)
       const incidenciaFormated = formatedData.map(item => Object.fromEntries(keys.map(key => [key, item[key]])))
       setCount(prev => prev + 1);
       preincidenciasRef.current = [...preincidenciasRef.current, incidenciaFormated[0]];
       setListaIncidencias(prevLista => [...prevLista, incidenciaFormated[0]]);
+      console.log('✅ [SOCKET] agregar-preincidencia - Incidencia agregada correctamente');
     })
+
     socket.on("saludo", (data) => {
+      console.log('🟢 [SOCKET] saludo - Datos recibidos:', data);
       socketIdRef.current = data.socketId
+      console.log('✅ [SOCKET] saludo - Socket ID guardado:', data.socketId);
     })
 
     socket.on('preincidencia-eliminada', (response) => {
-
+      console.log('🔴 [SOCKET] preincidencia-eliminada - Datos recibidos:', response);
       setCount(prev => prev - 1);
       setListaIncidencias(prevLista => prevLista.filter(incidencia => incidencia.id !== response.id));
       preincidenciasRef.current = preincidenciasRef.current.filter(incidencia => incidencia.id !== response.id);
+      console.log('✅ [SOCKET] preincidencia-eliminada - Incidencia eliminada, ID:', response.id);
     })
+
     socket.on("disconnect", () => {
-      console.log("Desconectado del servidor");
+      console.log("⚫ [SOCKET] disconnect - Desconectado del servidor");
     })
+
     /* Muestra nuevamente las preincidencias */
     socket.on("preincidencia-cancelada", (incidencia) => {
-      console.log(preincidenciasRef.current)
+      console.log('🟡 [SOCKET] preincidencia-cancelada - Datos recibidos:', incidencia);
+      console.log('📋 [SOCKET] preincidencia-cancelada - Estado actual:', preincidenciasRef.current)
       const keys = ["id", "jurisdiccion", "direccion", "creado", "hora", "notShow"]
       const formatedData = formatData([incidencia], subsectoresRef.current, subtiposRef.current)
       const incidenciaFormated = formatedData.map(item => Object.fromEntries(keys.map(key => [key, item[key]])))
@@ -112,19 +130,27 @@ const Incidencias = () => {
       const sortedArray = [...newArray].sort((a, b) => new Date(a.notShow.createdAt) - new Date(b.notShow.createdAt));
       preincidenciasRef.current = sortedArray
       setListaIncidencias(sortedArray)
+      console.log('✅ [SOCKET] preincidencia-cancelada - Incidencia restaurada a la lista');
     })
 
-
     socket.on("preincidencia-seleccionada", (response) => {
+      console.log('🟣 [SOCKET] preincidencia-seleccionada - Datos recibidos:', response);
       setCount(prev => prev - 1);
       setListaIncidencias(prevLista => prevLista.filter(incidencia => incidencia.id !== response.id));
       preincidenciasRef.current = preincidenciasRef.current.filter(incidencia => incidencia.id !== response.id);
+      console.log('✅ [SOCKET] preincidencia-seleccionada - Incidencia removida de la lista, ID:', response.id);
     })
 
-
-
+    console.log('📋 [SOCKET] Resumen de eventos configurados:');
+    console.log('   🔵 agregar-preincidencia - Agrega nueva incidencia a la lista');
+    console.log('   🟢 saludo - Guarda el socket ID del servidor');
+    console.log('   🔴 preincidencia-eliminada - Elimina incidencia de la lista');
+    console.log('   ⚫ disconnect - Desconecta del servidor');
+    console.log('   🟡 preincidencia-cancelada - Restaura incidencia a la lista');
+    console.log('   🟣 preincidencia-seleccionada - Remueve incidencia de la lista');
 
     return (() => {
+      console.log('🔌 [SOCKET] Desconectando y limpiando listeners...');
       if (socketRef.current) socketRef.current.disconnect();
       if (socketIdRef.current) socketIdRef.current = null
     })
@@ -160,7 +186,7 @@ const Incidencias = () => {
     const urlParams = queryParams || '';
     try {
       const url = `${import.meta.env.VITE_APP_ENDPOINT_PRUEBA
-        }/preincidencias/${urlParams}`;
+        }/incidencias/${urlParams}`;
       setisLoading(true);
       const response = await fetchService.getData(url, authToken);
       const subsectores = await fetchSubsectores()
@@ -262,10 +288,13 @@ const Incidencias = () => {
     setModalAbierto(true);
   };
   const onEdit = (obj) => {
+    console.log('📤 [SOCKET EMIT] select-preincidencia - Enviando datos:', { id: obj.id, user_id: idIncidencias.toString() });
     socketRef.current.emit("select-preincidencia", { id: obj.id, user_id: idIncidencias.toString() }, (response) => {
-      if (response.status === "ok") console.log("Se selecciona correctamente la preincidencia")
-      else {
-        console.log("Error Al seleccionar")
+      console.log('📥 [SOCKET EMIT] select-preincidencia - Respuesta recibida:', response);
+      if (response.status === "ok") {
+        console.log("✅ [SOCKET EMIT] select-preincidencia - Se seleccionó correctamente la preincidencia")
+      } else {
+        console.log("❌ [SOCKET EMIT] select-preincidencia - Error al seleccionar")
         setIncidenciaSeleccionada({})
       }
     })
@@ -277,7 +306,7 @@ const Incidencias = () => {
   const handleDelete = async (id) => {
     try {
       const url = `${import.meta.env.VITE_APP_ENDPOINT_PRUEBA
-        }/preincidencias/`;
+        }/incidencias/`;
       setisLoading(true);
       const response = await fetchService.deleteData(`${url}${id}`, authToken);
       if (response.status) {
@@ -306,9 +335,11 @@ const Incidencias = () => {
           setIncidenciaSeleccionada(null)
         }
         handleDelete(id)
+        console.log('📤 [SOCKET EMIT] eliminar-preincidencia - Enviando datos:', { id, user_id: idIncidencias.toString() });
         socketRef.current.emit('eliminar-preincidencia',
           { id, user_id: idIncidencias.toString() }, (response) => {
-            if (response.status === "ok") console.log("Se elimino correctamente")
+            console.log('📥 [SOCKET EMIT] eliminar-preincidencia - Respuesta recibida:', response);
+            if (response.status === "ok") console.log("✅ [SOCKET EMIT] eliminar-preincidencia - Se eliminó correctamente")
           }
         )
       }
@@ -316,9 +347,10 @@ const Incidencias = () => {
   }
 
   const cerrarModal = (id) => {
-
+    console.log('📤 [SOCKET EMIT] cancelar-preincidencia - Enviando datos:', { id, user_id: idIncidencias.toString() });
     socketRef.current.emit("cancelar-preincidencia", { id, user_id: idIncidencias.toString() }, (response) => {
-      if (response.status === "ok") console.log("Preincidencia deseleccionada con exito")
+      console.log('📥 [SOCKET EMIT] cancelar-preincidencia - Respuesta recibida:', response);
+      if (response.status === "ok") console.log("✅ [SOCKET EMIT] cancelar-preincidencia - Preincidencia deseleccionada con éxito")
     })
     setModalAbierto(false);
     if (Object.keys(incidenciaSeleccionada).length === 0) setIsReload(prev => !prev)

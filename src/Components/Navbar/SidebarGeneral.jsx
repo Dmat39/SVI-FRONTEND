@@ -19,22 +19,12 @@ const Sidebar = ({ toggled, setToggled }) => {
     const MenuItems = [
         {
             id: 1,
-            label: 'Dashboard',
-            icon: DashboardIcon,
-            link: '/',
-            target: '_self'
-        },
-        {
-            id: 2,
-            label: 'Mapas',
-            icon: MapRoundedIcon,
-
+            label: 'SVI',
+            icon: ReportProblemRoundedIcon,
             children: [
-                { id: 1, label: 'Vigilancia', icon: TravelExploreRoundedIcon, link: '/vigilancia', target: '_blank' },
-                { id: 2, label: 'Emergencias', icon: LocalHospitalRoundedIcon, link: '/emergencias', target: '_self' },
-                { id: 3, label: 'Incidencias', icon: ReportProblemRoundedIcon, link: '/incidencias/login', target: '_self' },
+                { id: 1, label: 'Incidencias', icon: ReportProblemRoundedIcon, link: '/incidencias/login', target: '_self' },
                 {
-                    id: 4,
+                    id: 2,
                     label: 'Historial',
                     icon: ReceiptLongIcon,
                     link: 'incidencias/historial',
@@ -42,22 +32,6 @@ const Sidebar = ({ toggled, setToggled }) => {
                 },
             ],
         },
-        {
-            id: 3,
-            label: 'Administración',
-            icon: TuneRoundedIcon,
-            children: [
-                {
-                    id: 1, label: 'Celulares', icon: StayCurrentPortraitRoundedIcon, children: [
-                        { id: 1, label: 'Lista', link: '/celular', target: '_self' },
-                        { id: 2, label: 'Desactivados', link: '/celular/desactivados', target: '_self' },
-                        { id: 3, label: 'Sin senal', link: '/celular/sin-señal', target: '_self' },
-                    ]
-                },
-            ],
-        },
-       
-
     ]
 
     return (

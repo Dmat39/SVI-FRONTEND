@@ -53,7 +53,8 @@ const IncidenciaDetalle = ({ dataSets, formik }) => (
                     '& .MuiInputLabel-root': { fontSize: '0.8rem' } // Ajusta el tamaño del label
                 }} />
         </Grid> */}
-        <Grid item xs={12} sm={6} md={4}>
+        {/* Campos de fecha y hora de registro comentados - el backend los maneja automáticamente */}
+        {/* <Grid item xs={12} sm={6} md={4}>
             <TextField
                 label="Fecha de Registro"
                 size="small"
@@ -65,9 +66,9 @@ const IncidenciaDetalle = ({ dataSets, formik }) => (
                 error={formik.touched.fecha_registro && Boolean(formik.errors.fecha_registro)}
                 helperText={formik.touched.fecha_registro && formik.errors.fecha_registro}
                 sx={{
-                    '& .MuiInputBase-input': { fontSize: '0.8rem' }, // Ajusta el tamaño del texto del input
-                    '& .MuiFormHelperText-root': { fontSize: '0.7rem' }, // Ajusta el tamaño del texto de ayuda
-                    '& .MuiInputLabel-root': { fontSize: '0.8rem' } // Ajusta el tamaño del label
+                    '& .MuiInputBase-input': { fontSize: '0.8rem' },
+                    '& .MuiFormHelperText-root': { fontSize: '0.7rem' },
+                    '& .MuiInputLabel-root': { fontSize: '0.8rem' }
                 }}
             />
         </Grid>
@@ -83,18 +84,23 @@ const IncidenciaDetalle = ({ dataSets, formik }) => (
                 error={formik.touched.hora_registro && Boolean(formik.errors.hora_registro)}
                 helperText={formik.touched.hora_registro && formik.errors.hora_registro}
                 sx={{
-                    '& .MuiInputBase-input': { fontSize: '0.8rem' }, // Ajusta el tamaño del texto del input
-                    '& .MuiFormHelperText-root': { fontSize: '0.7rem' }, // Ajusta el tamaño del texto de ayuda
-                    '& .MuiInputLabel-root': { fontSize: '0.8rem' } // Ajusta el tamaño del label
+                    '& .MuiInputBase-input': { fontSize: '0.8rem' },
+                    '& .MuiFormHelperText-root': { fontSize: '0.7rem' },
+                    '& .MuiInputLabel-root': { fontSize: '0.8rem' }
                 }}
             />
-        </Grid>
+        </Grid> */}
         <Grid item xs={12} sm={6} md={4} key="fecha_ocurrencia">
             <LocalizationProvider dateAdapter={AdapterDayjs}>
                 <DatePicker
                     label="Fecha de Ocurrencia"
-                    value={formik.values.fecha_ocurrencia ? dayjs(formik.values.fecha_ocurrencia) : null}
-                    onChange={(date) => formik.setFieldValue('fecha_ocurrencia', date ? date.format('YYYY-MM-DD') : '')}
+                    value={formik.values.doneAt ? dayjs(formik.values.doneAt) : null}
+                    onChange={(date) => {
+                        if (date) {
+                            const currentTime = formik.values.doneAt ? dayjs(formik.values.doneAt).format('HH:mm:ss') : '00:00:00';
+                            formik.setFieldValue('doneAt', `${date.format('YYYY-MM-DD')}T${currentTime}`);
+                        }
+                    }}
                     format='DD/MM/YYYY'
                     slotProps={{
                         textField: {
@@ -120,10 +126,13 @@ const IncidenciaDetalle = ({ dataSets, formik }) => (
                 name="hora_ocurrencia"
                 type="time"
                 fullWidth
-                value={formik.values.hora_ocurrencia}
-                onChange={formik.handleChange}
-                error={formik.touched.hora_ocurrencia && Boolean(formik.errors.hora_ocurrencia)}
-                helperText={formik.touched.hora_ocurrencia && formik.errors.hora_ocurrencia}
+                value={formik.values.doneAt ? dayjs(formik.values.doneAt).format('HH:mm') : ''}
+                onChange={(e) => {
+                    const currentDate = formik.values.doneAt ? dayjs(formik.values.doneAt).format('YYYY-MM-DD') : dayjs().format('YYYY-MM-DD');
+                    formik.setFieldValue('doneAt', `${currentDate}T${e.target.value}:00`);
+                }}
+                error={formik.touched.doneAt && Boolean(formik.errors.doneAt)}
+                helperText={formik.touched.doneAt && formik.errors.doneAt}
                 sx={{
                     '& .MuiInputBase-input': { fontSize: '0.8rem' }, // Ajusta el tamaño del texto del input
                     '& .MuiFormHelperText-root': { fontSize: '0.7rem' }, // Ajusta el tamaño del texto de ayuda

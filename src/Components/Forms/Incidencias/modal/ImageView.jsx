@@ -36,7 +36,7 @@ const ImageView = ({open,handleClose, foto, isVideo = false}) => {
       if (!foto) return
       setIsLoading(true)
       try {
-        const response = await incidenceApi.get(`/${foto}`, {
+        const response = await incidenceApi.get(`/incidencias/fotos/${foto.replace('preincidencias/fotos/', '')}`, {
           responseType: 'blob',
           headers: authToken ? { Authorization: `Bearer ${authToken}` } : undefined,
         })

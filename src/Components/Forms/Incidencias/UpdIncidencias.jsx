@@ -49,7 +49,7 @@ const UpdIncidencias = ({ refreshData, Selected, open, onClose, incidencia, setM
   const [openImage, setOpenImage] = useState(false)
   const [isLoadingThumbs, setIsLoadingThumbs] = useState(true)
   const userId = useSelector((state) => state.auth.idIncidencias);
-  const { postData } = useFetch();
+  const { patchData } = useFetch();
   const { token } = useSelector((state) => state.auth);
   const [fotoOpen, setFotoOpen] = useState(null)
   const [isCurrentItemVideo, setIsCurrentItemVideo] = useState(false)
@@ -177,7 +177,7 @@ const UpdIncidencias = ({ refreshData, Selected, open, onClose, incidencia, setM
   const formik = useFormik(dataSets ? {
     enableReinitialize: false,
     initialValues: {
-      unidad_id: incidencia?.unidad_id || "",
+      // unidad_id: incidencia?.unidad_id || "", // Comentado - no se usa
       tipo_caso_id: incidencia?.tipo_caso_id || "",
       sub_tipo_caso_id: incidencia?.sub_tipo_caso_id || "",
       tipo_reportante_id: incidencia?.tipo_reportante_id || "",
@@ -191,20 +191,22 @@ const UpdIncidencias = ({ refreshData, Selected, open, onClose, incidencia, setM
       jurisdiccion_id: incidencia?.jurisdiccion_id || "",
       descripcion: incidencia?.descripcion || "",
       observacion: incidencia?.observacion || "",
-      fecha_registro: new Date().toLocaleDateString("es-PE", {
-        timeZone: "America/Lima",
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit"
-      }).split("/").reverse().join("-"),
-      hora_registro: new Date().toLocaleTimeString("es-ES", {
-        timeZone: "America/Lima",
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false
-      }),
-      fecha_ocurrencia: incidencia?.fecha_ocurrencia,
-      hora_ocurrencia: incidencia?.hora_ocurrencia.substring(0, 5) || "",
+      doneAt: incidencia?.doneAt || new Date().toISOString(),
+      // fecha_registro: new Date().toLocaleDateString("es-PE", {
+      //   timeZone: "America/Lima",
+      //   year: "numeric",
+      //   month: "2-digit",
+      //   day: "2-digit"
+      // }).split("/").reverse().join("-"),
+      // hora_registro: new Date().toLocaleTimeString("es-ES", {
+      //   timeZone: "America/Lima",
+      //   hour: "2-digit",
+      //   minute: "2-digit",
+      //   second: "2-digit",
+      //   hour12: false
+      // }),
+      // fecha_ocurrencia: incidencia?.doneAt ? (typeof incidencia.doneAt === 'string' ? incidencia.doneAt.split('T')[0] : new Date(incidencia.doneAt).toISOString().split('T')[0]) : "",
+      // hora_ocurrencia: incidencia?.doneAt ? (typeof incidencia.doneAt === 'string' ? incidencia.doneAt.split('T')[1]?.split('.')[0] || "" : new Date(incidencia.doneAt).toISOString().split('T')[1].split('.')[0]) : "",
       estado_proceso_id: incidencia?.estado_proceso_id || dataSets.estados[3]?.id || "",
       genero_agresor_id: incidencia?.genero_agresor_id || dataSets.agresor[2]?.id || "",
       genero_victima_id: incidencia?.genero_victima_id || dataSets.victima[2]?.id || "",
@@ -215,7 +217,6 @@ const UpdIncidencias = ({ refreshData, Selected, open, onClose, incidencia, setM
       operador_id: incidencia?.operador_id || "",
     },
     validate: (values) => {
-
       const errors = {};
       const requiredFields = [
         "tipo_caso_id",
@@ -223,8 +224,7 @@ const UpdIncidencias = ({ refreshData, Selected, open, onClose, incidencia, setM
         "tipo_reportante_id",
         "jurisdiccion_id",
         "descripcion",
-        "fecha_ocurrencia",
-        "hora_ocurrencia",
+        "doneAt",
         "estado_proceso_id",
         "direccion",
         "severidad_proceso_id",
@@ -253,18 +253,12 @@ const UpdIncidencias = ({ refreshData, Selected, open, onClose, incidencia, setM
         errors.descripcion = "La descripción debe tener al menos 10 caracteres";
       }
 
-      if (
-        values.fecha_ocurrencia &&
-        !/^\d{4}-\d{2}-\d{2}$/.test(values.fecha_ocurrencia)
-      ) {
-        errors.fecha_ocurrencia = "Fecha de ocurrencia no válida";
-      }
-
-      if (
-        values.hora_ocurrencia &&
-        !/^\d{2}:\d{2}$/.test(values.hora_ocurrencia)
-      ) {
-        errors.hora_ocurrencia = "Hora de ocurrencia no válida";
+      // Validación para doneAt (fecha y hora de ocurrencia)
+      if (values.doneAt) {
+        const doneAtDate = new Date(values.doneAt);
+        if (isNaN(doneAtDate.getTime())) {
+          errors.doneAt = "Fecha y hora de ocurrencia no válida";
+        }
       }
 
       return errors;
@@ -297,7 +291,7 @@ const UpdIncidencias = ({ refreshData, Selected, open, onClose, incidencia, setM
         const results = await Promise.all(
           incidencia.fotos.map(async (path) => {
             try {
-              const response = await incidenceApi.get(`/${path}`, {
+              const response = await incidenceApi.get(`/incidencias/fotos/${path.replace('preincidencias/fotos/', '')}`, {
                 responseType: 'blob',
                 headers: authToken ? { Authorization: `Bearer ${authToken}` } : undefined,
               })
@@ -343,8 +337,8 @@ const UpdIncidencias = ({ refreshData, Selected, open, onClose, incidencia, setM
       cancelButtonText: 'Cancelar',
     }).then(async (result) => {
       if (result.isConfirmed) {
-        postData(
-          `${import.meta.env.VITE_APP_ENDPOINT_PRUEBA}/incidencias`,
+        patchData(
+          `${import.meta.env.VITE_APP_ENDPOINT_PRUEBA}/incidencias/${incidencia.id}`,
           values,
           token
         )
@@ -386,14 +380,14 @@ const UpdIncidencias = ({ refreshData, Selected, open, onClose, incidencia, setM
   }
   const handleClose = () => {
     formik.resetForm();
-    formik.setFieldValue(
-      "fecha_registro",
-      new Date().toISOString().split("T")[0]
-    );
-    formik.setFieldValue(
-      "hora_registro",
-      new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-    );
+    // formik.setFieldValue(
+    //   "fecha_registro",
+    //   new Date().toISOString().split("T")[0]
+    // );
+    // formik.setFieldValue(
+    //   "hora_registro",
+    //   new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })
+    // );
     if (onClose) onClose();
   };
   const handleOpenImage = (foto) => {

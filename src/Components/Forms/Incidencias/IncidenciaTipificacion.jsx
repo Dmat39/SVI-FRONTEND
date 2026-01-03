@@ -25,30 +25,31 @@ const IncidenciaTipificacion = ({ dataSets, formik }) => {
         <h2 className="text-lg font-bold ">Tipificacion de incidencia</h2>
         <Divider />
       </Grid>
-  
-      <Select
+
+      {/* Select de unidad_id comentado - estaba deshabilitado y causaba errores de validación */}
+      {/* <Select
         name="unidad_id"
         size="small"
         value={formik.values.unidad_id}
         label="unidades comprobando"
         onChange={formik.handleChange}
-        disabled  
-  
+        disabled
+
         sx={{
-          "& .MuiInputBase-input": { fontSize: "0.8rem" }, // Ajusta el tamaño del texto del input
-          "& .MuiFormHelperText-root": { fontSize: "0.7rem" }, // Ajusta el tamaño del texto de ayuda
-          "& .MuiInputLabel-root": { fontSize: "0.8rem" }, // Ajusta el tamaño del label
+          "& .MuiInputBase-input": { fontSize: "0.8rem" },
+          "& .MuiFormHelperText-root": { fontSize: "0.7rem" },
+          "& .MuiInputLabel-root": { fontSize: "0.8rem" },
           mt: 2,height: 35,ml:2
         }}
-        
+
       >
         {dataSets?.unidad.map((item) => (
           <MenuItem key={item.id} value={item.id} >
             {item.descripcion}{""}
-            
+
           </MenuItem>
         ))}
-      </Select>
+      </Select> */}
       <Grid item xs={12} sm={6} md={4} key="tipo_caso_id">
         <Autocomplete
           options={dataSets.tipoCaso || []}

@@ -1,5 +1,5 @@
 import React from 'react'
-import { createBrowserRouter, Outlet, RouterProvider } from 'react-router-dom';
+import { createBrowserRouter, Navigate, Outlet, RouterProvider } from 'react-router-dom';
 import Inicio from '../Pages/Inicio';
 import Vigilancia from '../Pages/Vigilancia';
 import PrivateRouter from './PrivateRouter';
@@ -20,6 +20,10 @@ const router = createBrowserRouter([
     children: [
       {
         path: "/",
+        element: <Navigate to="/incidencias/login" replace />,
+      },
+      {
+        path: "/inicio",
         element: <PrivateRouter element={<Inicio />} />,
       },
       {

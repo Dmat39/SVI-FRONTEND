@@ -100,8 +100,37 @@ function useFetch() {
     }
   }
 
+  const patchData = async (url, data, token, lazy = false) => {
+    try {
+      !lazy && dispatch(moduleLoading(true))
+      const base = url.includes(import.meta.env.VITE_APP_ENDPOINT_PRUEBA)
+        ? incidenceApi
+        : incidenceApi;
+      const path = url.replace(import.meta.env.VITE_APP_ENDPOINT_PRUEBA, '');
+      const response = await base.patch(path, data, {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
 
-  return { getData, postData }
+      return {
+        data: response.data,
+        status: true
+      }
+
+    } catch (error) {
+      const authError = handleAuthError(error)
+      if (authError.isAuthError) return authError
+
+      return {
+        error: error,
+        status: false
+      }
+    } finally {
+      dispatch(moduleLoading(false))
+    }
+  }
+
+
+  return { getData, postData, patchData }
 }
 
 export default useFetch

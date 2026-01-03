@@ -83,7 +83,7 @@ const MediaSwiper = ({ images }) => {
         const results = await Promise.all(
           images.map(async (path) => {
             try {
-              const response = await incidenceApi.get(`/${path}`, {
+              const response = await incidenceApi.get(`/incidencias/fotos/${path.replace('preincidencias/fotos/', '')}`, {
                 responseType: 'blob',
                 headers: authToken ? { Authorization: `Bearer ${authToken}` } : undefined,
               })
