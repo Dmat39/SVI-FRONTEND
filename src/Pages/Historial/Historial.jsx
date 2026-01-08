@@ -16,14 +16,22 @@ import DownloadIcon from '@mui/icons-material/Download';
 import * as XLSX from "xlsx";
 
 const Historial = () => {
-    const {addParams} = UseUrlParamsManager()
+    const {addParams, getParams} = UseUrlParamsManager()
     const {getData} = useFetch()
-    const [incidenciasHistorial,setIncidenciasHistorial] = useState([])
-    const [isLoading,setIsLoading] = useState(false)
     const { token } = useSelector((state) => state.auth);
-    const [turno,setTurno] = useState('Mañana')
     const navigate = useNavigate()
-    const [selectedDate, setSelectedDate] = useState(dayjs());
+
+    // Función para transformar el turno del backend al frontend
+    const transformTurnoFromBackend = (turnoValue) => {
+        const turnoMap = {
+            'MANANA': 'Mañana',
+            'TARDE': 'Tarde',
+            'NOCHE': 'Noche',
+            'UNDEFINED': 'No Definido',
+            'ROTATIVO': 'Rotativo'
+        };
+        return turnoMap[turnoValue] || 'Mañana';
+    };
 
     // Función para transformar el turno al formato esperado por el backend
     const transformTurno = (turnoValue) => {
@@ -36,6 +44,13 @@ const Historial = () => {
         };
         return turnoMap[turnoValue] || turnoValue;
     };
+
+    // Leer parámetros de la URL al inicializar
+    const params = getParams();
+    const [turno,setTurno] = useState(params.turno ? transformTurnoFromBackend(params.turno) : 'Mañana')
+    const [selectedDate, setSelectedDate] = useState(params.fecha ? dayjs(params.fecha) : dayjs());
+    const [incidenciasHistorial,setIncidenciasHistorial] = useState([])
+    const [isLoading,setIsLoading] = useState(false)
 
     useEffect(() => {
         fetchIncidencias(location.search|| undefined)

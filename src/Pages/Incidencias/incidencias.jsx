@@ -180,6 +180,26 @@ const Incidencias = () => {
     })
   }, [])
 
+  // Detectar cuando el usuario recarga la página o cierra la ventana
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      // Si hay una incidencia seleccionada (modal abierto), cancelarla antes de salir
+      if (incidenciaSeleccionada && incidenciaSeleccionada.id && socketRef.current) {
+        console.log('⚠️ [BEFOREUNLOAD] Usuario recargando página con modal abierto - Cancelando incidencia:', incidenciaSeleccionada.id);
+        socketRef.current.emit("cancelar-preincidencia", {
+          id: incidenciaSeleccionada.id,
+          user_id: idIncidencias
+        });
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [incidenciaSeleccionada, idIncidencias])
+
 
 
   const fetchSubsectores = async () => {
