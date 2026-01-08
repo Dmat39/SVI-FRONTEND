@@ -1,9 +1,16 @@
 import React from 'react';
 import { Grid, Divider, Autocomplete, TextField } from '@mui/material';
 import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+
+// Configurar plugins de dayjs para zona horaria
+dayjs.extend(utc);
+dayjs.extend(timezone);
+
 const IncidenciaDetalle = ({ dataSets, formik }) => (
 
     <>
@@ -94,10 +101,10 @@ const IncidenciaDetalle = ({ dataSets, formik }) => (
             <LocalizationProvider dateAdapter={AdapterDayjs}>
                 <DatePicker
                     label="Fecha de Ocurrencia"
-                    value={formik.values.doneAt ? dayjs(formik.values.doneAt) : null}
+                    value={formik.values.doneAt ? dayjs.utc(formik.values.doneAt) : null}
                     onChange={(date) => {
                         if (date) {
-                            const currentTime = formik.values.doneAt ? dayjs(formik.values.doneAt).format('HH:mm:ss') : '00:00:00';
+                            const currentTime = formik.values.doneAt ? dayjs.utc(formik.values.doneAt).format('HH:mm:ss') : '00:00:00';
                             formik.setFieldValue('doneAt', `${date.format('YYYY-MM-DD')}T${currentTime}`);
                         }
                     }}
@@ -126,9 +133,9 @@ const IncidenciaDetalle = ({ dataSets, formik }) => (
                 name="hora_ocurrencia"
                 type="time"
                 fullWidth
-                value={formik.values.doneAt ? dayjs(formik.values.doneAt).format('HH:mm') : ''}
+                value={formik.values.doneAt ? dayjs.utc(formik.values.doneAt).format('HH:mm') : ''}
                 onChange={(e) => {
-                    const currentDate = formik.values.doneAt ? dayjs(formik.values.doneAt).format('YYYY-MM-DD') : dayjs().format('YYYY-MM-DD');
+                    const currentDate = formik.values.doneAt ? dayjs.utc(formik.values.doneAt).format('YYYY-MM-DD') : dayjs.utc().format('YYYY-MM-DD');
                     formik.setFieldValue('doneAt', `${currentDate}T${e.target.value}:00`);
                 }}
                 error={formik.touched.doneAt && Boolean(formik.errors.doneAt)}

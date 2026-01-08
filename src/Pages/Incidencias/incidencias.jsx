@@ -24,7 +24,13 @@ import { getToken } from "../../Components/helpers/axiosConfig";
 
 import { useDispatch } from "react-redux";
 import dayjs from "dayjs";
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
 import useFetchData from "../../Hooks/UseFetchData";
+
+// Configurar plugins de dayjs para zona horaria
+dayjs.extend(utc);
+dayjs.extend(timezone);
 import FetchServicePoo from "../../POO/Fetch";
 import CustomSwal from "../../Components/helpers/swalConfig";
 import UseUrlParamsManager from "../../Components/hooks/UseUrlParamsManager";
@@ -78,6 +84,10 @@ const Incidencias = () => {
     console.log('🔌 [SOCKET] Iniciando conexión al servidor:', import.meta.env.VITE_APP_ENDPOINT_PRUEBA_SOCKET);
     const socket = io(import.meta.env.VITE_APP_ENDPOINT_PRUEBA_SOCKET, {
       transports: ['websocket'],
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      reconnectionAttempts: 5,
     })
     socketRef.current = socket
 
@@ -87,6 +97,20 @@ const Incidencias = () => {
 
     socket.on('connect_error', (error) => {
       console.error('❌ [SOCKET] Error de conexión:', error);
+      console.log('🔄 [SOCKET] Reintentando conexión...');
+    })
+
+    socket.on('reconnect', (attemptNumber) => {
+      console.log('🔄 [SOCKET] Reconectado después de', attemptNumber, 'intentos');
+    })
+
+    socket.on('reconnect_error', (error) => {
+      console.error('❌ [SOCKET] Error al reintentar conexión:', error);
+    })
+
+    socket.on('reconnect_failed', () => {
+      console.error('❌ [SOCKET] Falló la reconexión después de todos los intentos');
+      console.log('⚠️ [SOCKET] Por favor, verifica que el servidor backend esté corriendo en:', import.meta.env.VITE_APP_ENDPOINT_PRUEBA_SOCKET);
     })
 
     socket.on('agregar-preincidencia', (preincidencia) => {
@@ -209,12 +233,14 @@ const Incidencias = () => {
   const formatData = (data, subsectores, subtipos) => {
 
     return data.map(incidencia => {
+      // Convertir a zona horaria de Perú
+      const fechaPeruana = dayjs.utc(incidencia.createdAt);
 
       return {
         ...incidencia,
 
-        creado: format(incidencia.createdAt, "dd/MM/yyyy"),
-        hora: dayjs(incidencia.createdAt).format("HH:mm"),
+        creado: fechaPeruana.format("DD/MM/YYYY"),
+        hora: fechaPeruana.format("HH:mm"),
         jurisdiccion: subsectores.find(
           (sector) =>
             sector.id == incidencia.jurisdiccion_id
@@ -288,8 +314,8 @@ const Incidencias = () => {
     setModalAbierto(true);
   };
   const onEdit = (obj) => {
-    console.log('📤 [SOCKET EMIT] select-preincidencia - Enviando datos:', { id: obj.id, user_id: idIncidencias.toString() });
-    socketRef.current.emit("select-preincidencia", { id: obj.id, user_id: idIncidencias.toString() }, (response) => {
+    console.log('📤 [SOCKET EMIT] select-preincidencia - Enviando datos:', { id: obj.id, user_id: idIncidencias });
+    socketRef.current.emit("select-preincidencia", { id: obj.id, user_id: idIncidencias }, (response) => {
       console.log('📥 [SOCKET EMIT] select-preincidencia - Respuesta recibida:', response);
       if (response.status === "ok") {
         console.log("✅ [SOCKET EMIT] select-preincidencia - Se seleccionó correctamente la preincidencia")
@@ -303,19 +329,6 @@ const Incidencias = () => {
   const onDelete = (obj) => {
     handleDeleteConfimar(obj.id)
   }
-  const handleDelete = async (id) => {
-    try {
-      const url = `${import.meta.env.VITE_APP_ENDPOINT_PRUEBA
-        }/incidencias/`;
-      setisLoading(true);
-      const response = await fetchService.deleteData(`${url}${id}`, authToken);
-      if (response.status) {
-        setListaIncidencias(listaIncidencias.filter((incidencia) => incidencia.id !== id))
-      }
-    } finally {
-      setisLoading(false);
-    }
-  };
   const handleDeleteConfimar = (id) => {
     CustomSwal.fire({
       title: '¿Seguro que quieres eliminar la preincidencia?',
@@ -334,12 +347,16 @@ const Incidencias = () => {
           setModalAbierto(false)
           setIncidenciaSeleccionada(null)
         }
-        handleDelete(id)
-        console.log('📤 [SOCKET EMIT] eliminar-preincidencia - Enviando datos:', { id, user_id: idIncidencias.toString() });
+        // Emitir socket para eliminar - el listener 'preincidencia-eliminada' actualiza la UI
+        console.log('📤 [SOCKET EMIT] eliminar-preincidencia - Enviando datos:', { id, user_id: idIncidencias });
         socketRef.current.emit('eliminar-preincidencia',
-          { id, user_id: idIncidencias.toString() }, (response) => {
+          { id, user_id: idIncidencias }, (response) => {
             console.log('📥 [SOCKET EMIT] eliminar-preincidencia - Respuesta recibida:', response);
-            if (response.status === "ok") console.log("✅ [SOCKET EMIT] eliminar-preincidencia - Se eliminó correctamente")
+            if (response.status === "ok") {
+              console.log("✅ [SOCKET EMIT] eliminar-preincidencia - Se eliminó correctamente")
+            } else {
+              console.log("❌ [SOCKET EMIT] eliminar-preincidencia - Error al eliminar")
+            }
           }
         )
       }
@@ -347,8 +364,8 @@ const Incidencias = () => {
   }
 
   const cerrarModal = (id) => {
-    console.log('📤 [SOCKET EMIT] cancelar-preincidencia - Enviando datos:', { id, user_id: idIncidencias.toString() });
-    socketRef.current.emit("cancelar-preincidencia", { id, user_id: idIncidencias.toString() }, (response) => {
+    console.log('📤 [SOCKET EMIT] cancelar-preincidencia - Enviando datos:', { id, user_id: idIncidencias });
+    socketRef.current.emit("cancelar-preincidencia", { id, user_id: idIncidencias }, (response) => {
       console.log('📥 [SOCKET EMIT] cancelar-preincidencia - Respuesta recibida:', response);
       if (response.status === "ok") console.log("✅ [SOCKET EMIT] cancelar-preincidencia - Preincidencia deseleccionada con éxito")
     })

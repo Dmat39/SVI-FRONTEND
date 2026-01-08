@@ -46,12 +46,11 @@ const LoginIncidencias = () => {
                 // Guardar datos del usuario
                 const userData = response?.data?.data;
                 if (userData) {
-                    // Usar el email como ID temporal o crear un identificador único
-                    dispatch(setIdIncidencias(values.email));
+                    // Guardar el user_id numérico del backend
+                    dispatch(setIdIncidencias(userData.user_id));
                 }
 
-                // Redirigir a la lista de incidencias después del login exitoso
-                navigate('/incidencias/lista');
+                // No es necesario navegar manualmente - PublicIncidencias se encarga de redirigir automáticamente
             } catch (error) {
                 setError(
                     error.response?.data?.message ||

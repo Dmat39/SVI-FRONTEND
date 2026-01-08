@@ -191,7 +191,7 @@ const UpdIncidencias = ({ refreshData, Selected, open, onClose, incidencia, setM
       jurisdiccion_id: incidencia?.jurisdiccion_id || "",
       descripcion: incidencia?.descripcion || "",
       observacion: incidencia?.observacion || "",
-      doneAt: incidencia?.doneAt || new Date().toISOString(),
+      doneAt: incidencia?.createdAt || new Date().toISOString(),
       // fecha_registro: new Date().toLocaleDateString("es-PE", {
       //   timeZone: "America/Lima",
       //   year: "numeric",
@@ -264,9 +264,9 @@ const UpdIncidencias = ({ refreshData, Selected, open, onClose, incidencia, setM
       return errors;
     },
     onSubmit: (values) => {
-
+      // No enviar fotos - ya están en el servidor
+      // Solo enviar los campos necesarios para actualizar la incidencia
       values.id = incidencia.id
-      values.fotos = incidencia.fotos
       values.nombre_reportante = incidencia.nombre_reportante
       values.user_id = userId.toString()
       if (typeof values.latitud !== "string") values.latitud = values.latitud.toString()
@@ -326,8 +326,8 @@ const UpdIncidencias = ({ refreshData, Selected, open, onClose, incidencia, setM
     }
   }, [incidencia?.fotos, authToken])
 
-  const handleRegistrarConfimar = (values) => {
-    CustomSwal.fire({
+  const handleRegistrarConfimar = async (values) => {
+    const result = await CustomSwal.fire({
       title: '¿Seguro que quieres registrar la preincidencia?',
       icon: 'warning',
       showCancelButton: true,
@@ -335,44 +335,40 @@ const UpdIncidencias = ({ refreshData, Selected, open, onClose, incidencia, setM
       cancelButtonColor: '#d33',
       confirmButtonText: 'Sí, registrar',
       cancelButtonText: 'Cancelar',
-    }).then(async (result) => {
-      if (result.isConfirmed) {
-        patchData(
-          `${import.meta.env.VITE_APP_ENDPOINT_PRUEBA}/incidencias/${incidencia.id}`,
-          values,
-          token
-        )
-          .then((response) => {
-            if (response.status) {
-              CustomSwal.fire(
-                "Agregado",
-                "La incidencia ha sido registrada correctamente.",
-                "success"
-              );
-              handleClose();
-              setListaIncidencias(prev => prev.filter(incidenciaElemento => incidenciaElemento.id !== incidencia.id))
-              setModalAbierto(false)
-            } else {
-              swalError(response.errors.msg);
-            }
-          })
-          .catch((error) => {
-            console.error("Error en la solicitud:", error);
-            swalError({
-              message: "Error inesperado al registrar la incidencia",
-              /*  data: [error.message], */
-            });
-          })
-          .finally(() => {
-            formik.setSubmitting(false);
-          })
-      }
+    });
+
+    if (!result.isConfirmed) {
+      formik.setSubmitting(false);
+      return;
     }
 
+    try {
+      const response = await patchData(
+        `${import.meta.env.VITE_APP_ENDPOINT_PRUEBA}/incidencias/${incidencia.id}`,
+        values,
+        token
+      );
 
-    ).finally(() => {
+      if (response.status) {
+        CustomSwal.fire(
+          "Agregado",
+          "La incidencia ha sido registrada correctamente.",
+          "success"
+        );
+        handleClose();
+        setListaIncidencias(prev => prev.filter(incidenciaElemento => incidenciaElemento.id !== incidencia.id));
+        setModalAbierto(false);
+      } else {
+        swalError(response?.errors?.msg || response?.error?.message || "Error al registrar la incidencia");
+      }
+    } catch (error) {
+      console.error("Error en la solicitud:", error);
+      swalError({
+        message: "Error inesperado al registrar la incidencia",
+      });
+    } finally {
       formik.setSubmitting(false);
-    })
+    }
   }
 
   const handleCloseImageView = () => {

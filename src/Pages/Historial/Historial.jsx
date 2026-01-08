@@ -13,7 +13,7 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs from 'dayjs';
 import Button from '@mui/material/Button';
 import DownloadIcon from '@mui/icons-material/Download';
-import * as XLSX from "xlsx-js-style";
+import * as XLSX from "xlsx";
 
 const Historial = () => {
     const {addParams} = UseUrlParamsManager()

@@ -19,10 +19,10 @@ const mainApi = axios.create({
   timeout: 10000,
 });
 
-// Cliente para incidencias
+// Cliente para incidencias (timeout aumentado por procesamiento de fotos)
 const incidenceApi = axios.create({
   baseURL: import.meta.env.VITE_APP_ENDPOINT_PRUEBA,
-  timeout: 10000,
+  timeout: 60000, // 60 segundos
 });
 
 // Interceptor para adjuntar token
