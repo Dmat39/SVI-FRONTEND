@@ -2,7 +2,7 @@ import { createSlice } from '@reduxjs/toolkit'
 
 const initialState = {
     token: null,
-    user: true,
+    user: null,
     loading: false,
     idIncidencias: null,
     loginTime: null,
@@ -24,6 +24,7 @@ const AuthSlice = createSlice({
     },
     setTokenAuth: (state, action) => {
       state.token = action.payload;
+      state.user = action.payload ? true : null; // Si hay token, hay usuario autenticado
       state.loginTime = Date.now(); // Guardar el tiempo de inicio de sesión
     },
     setIdIncidencias: (state, action) => {

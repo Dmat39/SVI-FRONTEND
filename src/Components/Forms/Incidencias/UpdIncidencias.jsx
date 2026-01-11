@@ -102,11 +102,21 @@ const UpdIncidencias = ({ refreshData, Selected, open, onClose, incidencia, setM
 
   useEffect(() => {
 
-    let datasetsLocal = JSON.parse(localStorage.getItem("datasets")) || null
-    if (datasetsLocal) {
-      const isExpireDate = new Date() > new Date(datasetsLocal.expiryDate)
-      datasetsLocal = !isExpireDate ? datasetsLocal : null
+    let datasetsLocal = null;
+    try {
+      const stored = localStorage.getItem("datasets");
+      if (stored) {
+        datasetsLocal = JSON.parse(stored);
+        if (datasetsLocal) {
+          const isExpireDate = new Date() > new Date(datasetsLocal.expiryDate)
+          datasetsLocal = !isExpireDate ? datasetsLocal : null
+        }
+      }
+    } catch (err) {
+      console.warn("No se pudo acceder a localStorage:", err);
+      datasetsLocal = null;
     }
+
     if (!datasetsLocal && open) {
       setIsLoading(true);
       Promise.all([
@@ -149,7 +159,12 @@ const UpdIncidencias = ({ refreshData, Selected, open, onClose, incidencia, setM
           const now = new Date()
           const ttl = 2 * 24 * 60 * 60 * 1000; // 172800000 ms (2 días)
           datasetsFetched.expiryDate = new Date(now.getTime() + ttl);
-          localStorage.setItem("datasets", JSON.stringify(datasetsFetched))
+
+          try {
+            localStorage.setItem("datasets", JSON.stringify(datasetsFetched))
+          } catch (err) {
+            console.warn("No se pudo guardar en localStorage:", err);
+          }
 
         })
         .catch((err) => {
@@ -432,8 +447,13 @@ const UpdIncidencias = ({ refreshData, Selected, open, onClose, incidencia, setM
         setDataSets(datasetsFetched);
         const now = new Date()
         const ttl = 2 * 24 * 60 * 60 * 1000; // 172800000 ms (2 días)
-        datasetsFetched.expiry = now + ttl
-        localStorage.setItem("datasets", JSON.stringify(datasetsFetched))
+        datasetsFetched.expiryDate = new Date(now.getTime() + ttl);
+
+        try {
+          localStorage.setItem("datasets", JSON.stringify(datasetsFetched))
+        } catch (err) {
+          console.warn("No se pudo guardar en localStorage:", err);
+        }
 
       })
       .catch((err) => {

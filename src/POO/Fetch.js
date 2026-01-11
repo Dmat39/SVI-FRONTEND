@@ -24,7 +24,11 @@ class FetchService {
         didClose: () => {
           isAuthModalShowing = false;
           // Limpiar localStorage y redirigir
-          localStorage.removeItem('vigilaciaState');
+          try {
+            localStorage.removeItem('vigilaciaState');
+          } catch (err) {
+            console.warn("No se pudo limpiar localStorage:", err);
+          }
           window.location.href = '/incidencias/login'
         }
       });

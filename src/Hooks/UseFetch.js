@@ -14,18 +14,18 @@ function useFetch() {
 
   const handleAuthError = (error, lazy) => {
     if (error.response && error.response.status === 401 && !lazy) {
+      // Si no hay token, es un error de login (credenciales incorrectas)
+      // No hacer logout ni mostrar modal, solo retornar el error
+      if (!token) {
+        return { isAuthError: false } // Dejar que el componente maneje el error
+      }
+
       // Evitar mostrar múltiples modales
       if (isAuthModalShowing) {
         return { isAuthError: true, message: 'Sesión expirada' }
       }
-      
-      // Si no hay token, hacer logout silencioso
-      if (!token) {
-        dispatch(logout());
-        handleLogout('/incidencias/login');
-        return { isAuthError: true, message: 'Sesión expirada' }
-      }
 
+      // Si hay token pero retorna 401, es sesión expirada
       isAuthModalShowing = true;
       CustomSwal.fire({
         icon: 'error',

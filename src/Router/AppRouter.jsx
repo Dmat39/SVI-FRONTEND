@@ -16,7 +16,7 @@ import Historial from '../Pages/Historial/Historial';
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <PrivateRouter element={<Layout />} />,
+    element: <Layout />,
     children: [
       {
         path: "/",
@@ -50,7 +50,7 @@ const router = createBrowserRouter([
       },
       {
         path: "/incidencias/login",
-        element: <PublicIncidencias element={<LoginIncidencias  />} />,
+        element: <PublicIncidencias element={<LoginIncidencias />} />,
       },
       {
         path: "/incidencias/lista",

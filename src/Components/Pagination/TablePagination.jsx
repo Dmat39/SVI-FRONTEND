@@ -18,7 +18,11 @@ const CustomTablePagination = ({count}) => {
             count={count || 1000}
             page={page - 1}
             onPageChange={(event, newPage) => {
-                localStorage.setItem('scrollPosition', 0);
+                try {
+                    localStorage.setItem('scrollPosition', 0);
+                } catch (err) {
+                    console.warn("No se pudo guardar scrollPosition en localStorage:", err);
+                }
                 addParams({ page: newPage + 1, limit });
             }}
             rowsPerPage={limit}

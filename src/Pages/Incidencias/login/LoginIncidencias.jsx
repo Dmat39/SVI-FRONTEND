@@ -36,25 +36,43 @@ const LoginIncidencias = () => {
                     password: values.password
                 });
 
+                // Verificar que la respuesta sea exitosa
+                if (!response || !response.status) {
+                    // Error en la autenticación
+                    setError(
+                        response?.error?.response?.data?.message ||
+                        response?.error?.response?.data?.error ||
+                        'Credenciales incorrectas. Por favor, verifica tu email y contraseña.'
+                    );
+                    return;
+                }
+
                 // Guardar token global para axios
                 const token = response?.data?.token;
-                if (token) {
-                    setAxiosToken(token);
-                    dispatch(setTokenAuth(token));
+                if (!token) {
+                    setError('Error: No se recibió token de autenticación.');
+                    return;
                 }
+
+                setAxiosToken(token);
+                dispatch(setTokenAuth(token));
 
                 // Guardar datos del usuario
                 const userData = response?.data?.data;
-                if (userData) {
-                    // Guardar el user_id numérico del backend
-                    dispatch(setIdIncidencias(userData.user_id));
+                if (!userData || !userData.user_id) {
+                    setError('Error: No se recibieron datos del usuario.');
+                    return;
                 }
+
+                // Guardar el user_id numérico del backend
+                dispatch(setIdIncidencias(userData.user_id));
 
                 // No es necesario navegar manualmente - PublicIncidencias se encarga de redirigir automáticamente
             } catch (error) {
+                console.error('Error inesperado en login:', error);
                 setError(
-                    error.response?.data?.message ||
-                    'Error al iniciar sesión. Por favor, inténtalo de nuevo.'
+                    error?.message ||
+                    'Error inesperado al iniciar sesión. Por favor, inténtalo de nuevo.'
                 );
             } finally {
                 setSubmitting(false);
